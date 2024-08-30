@@ -1,0 +1,13 @@
+# To customize values for a specific cluster, create a separate values file and point to it in the config file:
+# argocd/cluster-addons/cluster-config/<cluster>/config.json
+
+# Default values for cluster-addons.
+# You can override these values for each addon below.
+default:
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true # Create namespace if it does not exist.
+    automated: # Automated sync options.
+      prune: false # Delete resources that are not in git (e.g. deleted files).
+      selfHeal: true # Reconcile resources that are not in desired state (e.g. due to manual edits).
+      allowEmpty: true # Allow empty manifests to be applied. This is useful for Helm charts that may not have any manifests.

@@ -1,0 +1,41 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: addons
+  namespace: argocd
+spec:
+  generators:
+  - git:
+      repoURL: https://github.com/nadaverellgcp/nadav-test-svc.git
+      revision: HEAD
+      files:
+      - path: "argocd/cluster-addons/cluster-config/**/config.json"
+  template:
+    metadata:
+      name: '{{cluster.name}}-addons'
+    spec:
+      project: cluster-admin
+      source:
+        helm:
+          valueFiles:
+            - '{{valuesFile}}'
+          values: |
+            spec:
+              destination:
+                server: '{{cluster.address}}'
+            cluster:
+              name: '{{cluster.name}}'
+              location: '{{cluster.location}}'
+              project: '{{cluster.project}}'
+
+        repoURL: 'https://github.com/nadaverellgcp/nadav-test-svc.git'
+        targetRevision: '{{targetRevision}}'
+        path: "argocd/cluster-addons"
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: argocd
+      syncPolicy:
+        automated:
+          prune: false
+          # selfHeal: true
+          # allowEmpty: true
