@@ -19,7 +19,7 @@ spec:
       path: "/argocd/addons/cert-manager"
       helm:
         releaseName: cert-manager-crds
-        values:
+        valuesObject:
           # Pass values to the custom CRDs Helm chart
           {{- toYaml ($addon.certManagerCRDsValues | default dict) | nindent 10 }}
     - chart: cert-manager
@@ -27,7 +27,7 @@ spec:
       repoURL: https://charts.jetstack.io
       helm:
         releaseName: cert-manager
-        values:
+        valuesObject:
           # Pass values to the cert-manager Helm chart
           {{- toYaml ($addon.certManagerValues | default dict) | nindent 10 }}
   destination:
