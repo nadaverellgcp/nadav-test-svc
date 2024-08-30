@@ -1,0 +1,48 @@
+# Generate the ArgoCD Application for a helm-chart-only addon, if the addon is enabled for the cluster.
+{{- if and (hasKey .Values "certManagerAddon") (.Values.certManagerAddon.enabled) }}
+{{- $addon := .Values.certManagerAddon }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cert-manager-{{ .Values.cluster.name }}
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: cluster-admin
+  sources:
+    # It is recommended to install CRDs and the cert-manager chart separately to avoid issues when uninstalling cert-manager,
+    # which could lead to problems like deleted certificates due to the CRDs being removed.
+    # Read more at: https://cert-manager.io/docs/installation/helm/#crd-installation-advice
+    - repoURL: "https://github.com/nadaverellgcp/nadav-test-svc.git"
+      targetRevision: HEAD
+      path: "argocd/addons/cert-manager"
+      # argocd/cluster-addons/addons/cert-manager
+      helm:
+        releaseName: cert-manager-crds
+        valuesObject:
+          # Pass values to the custom CRDs helm chart
+          {{- toYaml ($addon.certManagerCRDsValues | default dict) |  nindent 10 }}
+    - chart: cert-manager
+      targetRevision: {{ $addon.chartVersion | required "chartVersion is required" | quote}}
+      repoURL:  https://charts.jetstack.io
+      helm:
+        releaseName: cert-manager
+        valuesObject:
+          # Pass values to the cert-manager helm chart
+          {{- toYaml ($addon.certManagerValues | default dict) |  nindent 10 }}
+  destination:
+    server: {{ .Values.spec.destination.server }}
+    namespace: cert-manager
+  syncPolicy:
+    # Use the addon's syncPolicy if it is defined, otherwise use the cluster-default syncPolicy if defined, 
+    # or finally fall back to a basic default syncPolicy.
+    {{- if $addon.syncPolicy }}
+    {{- $addon.syncPolicy | toYaml | nindent 4 }}
+    {{- else if .Values.default.syncPolicy }}
+    {{- .Values.default.syncPolicy | toYaml | nindent 4 }}
+    {{- else }}
+    syncOptions:
+      - CreateNamespace=true
+    {{- end }}
+{{- end }}

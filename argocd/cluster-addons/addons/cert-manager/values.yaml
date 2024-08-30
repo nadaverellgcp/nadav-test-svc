@@ -1,0 +1,3 @@
+crdsVersion: 1.15.3 # Default version, can be overridden for each environment
+ingressClass: nginx # Default ingress class, to be replaced if using a different ingress controller
+email: "" # Email address used for ACME registration, to be notified of expiring certificates and other issues
