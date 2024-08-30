@@ -1,4 +1,0 @@
-apiVersion: v2
-name: cert-manager-crds
-version: 1.0.0 # Placeholder/fake version, does not need to be updated.
-description: Helm Chart for cert-manager CRDs and Issuer/ClusterIssuer resources. Does not install cert-manager itself.
