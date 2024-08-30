@@ -2,7 +2,7 @@
   "cluster": {
     "address": "https://kubernetes.default.svc",
     "cloudProvider": "gcp",
-    "location": "us-central1\t",
+    "location": "us-central1",
     "name": "nonprod-cluster-us-central1",
     "project": "koalabackend"
   },
