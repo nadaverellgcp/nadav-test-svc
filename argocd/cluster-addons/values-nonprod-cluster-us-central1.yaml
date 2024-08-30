@@ -11,3 +11,8 @@ default:
       prune: false # Delete resources that are not in git (e.g. deleted files).
       selfHeal: true # Reconcile resources that are not in desired state (e.g. due to manual edits).
       allowEmpty: true # Allow empty manifests to be applied. This is useful for Helm charts that may not have any manifests.
+ingressNginxAddon:
+  enabled: true
+  chartVersion: 4.11.2
+  valuesObject:
+    fullnameOverride: ingress-nginx
