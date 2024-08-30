@@ -16,3 +16,7 @@ ingressNginxAddon:
   chartVersion: 4.11.2
   valuesObject:
     fullnameOverride: ingress-nginx
+reloaderAddon:
+  enabled: true
+  chartVersion: 1.1.0
+  valuesObject: {}
