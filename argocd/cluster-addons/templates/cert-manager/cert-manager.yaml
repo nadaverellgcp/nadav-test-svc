@@ -16,9 +16,7 @@ spec:
     # Read more at: https://cert-manager.io/docs/installation/helm/#crd-installation-advice
     - repoURL: "https://github.com/nadaverellgcp/nadav-test-svc.git"
       targetRevision: HEAD
-      path: "argocd/cluster-addons/addons/cert-manager"
-      kustomize:
-        path: "templates"
+      path: "argocd/cluster-addons/addons/cert-manager/templates"
     - chart: cert-manager
       targetRevision: {{ $addon.chartVersion | required "chartVersion is required" | quote}}
       repoURL:  https://charts.jetstack.io
