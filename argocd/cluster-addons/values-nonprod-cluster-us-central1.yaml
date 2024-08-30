@@ -34,4 +34,4 @@ certManagerAddon:
     # It will be used to contact you in case of issues with your account or certificates,
     # including expiry notification emails. This field may be updated after the account is initially registered.
     # Read more: https://cert-manager.io/docs/reference/api-docs/
-    email: nadav@koalaops.com
+    email: "nadav@koalaops.com"
