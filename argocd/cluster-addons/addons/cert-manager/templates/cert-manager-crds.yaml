@@ -1,0 +1,4 @@
+apiVersion: v1
+kind: List
+items:
+- {{ include "cert-manager.crds" . | indent 2 }}

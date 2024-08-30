@@ -20,4 +20,18 @@ reloaderAddon:
   enabled: true
   chartVersion: 1.1.0
   valuesObject: {}
-
+certManagerAddon:
+  enabled: true
+  chartVersion: 1.15.3
+  # Values to be passed to the main cert-manager chart.
+  # For a full list of values, see: https://artifacthub.io/packages/helm/cert-manager/cert-manager
+  certManagerValues:
+  # Values to be passed to the custom cert-manager-crds chart.
+  certManagerCRDsValues:
+    crdsVersion: 1.15.3
+    # Email is the email address to be associated with the ACME account.
+    # This field is optional, but it is strongly recommended to be set.
+    # It will be used to contact you in case of issues with your account or certificates,
+    # including expiry notification emails. This field may be updated after the account is initially registered.
+    # Read more: https://cert-manager.io/docs/reference/api-docs/
+    email: nadav@koalaops.com
