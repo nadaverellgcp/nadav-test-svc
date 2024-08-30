@@ -18,6 +18,8 @@ spec:
       targetRevision: HEAD
       path: "argocd/cluster-addons/addons/cert-manager"
       # argocd/cluster-addons/addons/cert-manager
+      kustomize:
+        path: templates  # Helm renders the Kustomization file here
       helm:
         releaseName: cert-manager-crds
         valuesObject:
