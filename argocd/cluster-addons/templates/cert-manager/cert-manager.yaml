@@ -17,11 +17,8 @@ spec:
     - repoURL: "https://github.com/nadaverellgcp/nadav-test-svc.git"
       targetRevision: HEAD
       path: "argocd/cluster-addons/addons/cert-manager"
-      helm:
-        releaseName: cert-manager-crds
-        valuesObject:
-          # Pass values to the custom CRDs helm chart
-          {{- toYaml ($addon.certManagerCRDsValues | default dict) |  nindent 10 }}
+      kustomize:
+        path: "templates"
     - chart: cert-manager
       targetRevision: {{ $addon.chartVersion | required "chartVersion is required" | quote}}
       repoURL:  https://charts.jetstack.io
