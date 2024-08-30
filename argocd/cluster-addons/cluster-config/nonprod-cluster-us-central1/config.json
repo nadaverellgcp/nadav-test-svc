@@ -1,0 +1,11 @@
+{
+  "cluster": {
+    "address": "https://kubernetes.default.svc",
+    "cloudProvider": "gcp",
+    "location": "us-central1\t",
+    "name": "nonprod-cluster-us-central1",
+    "project": "koalabackend"
+  },
+  "targetRevision": "main",
+  "valuesFile": "values-nonprod-cluster-us-central1.yaml"
+}
