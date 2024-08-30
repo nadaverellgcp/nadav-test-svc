@@ -16,7 +16,7 @@ spec:
     # Read more at: https://cert-manager.io/docs/installation/helm/#crd-installation-advice
     - repoURL: "https://github.com/nadaverellgcp/nadav-test-svc.git"
       targetRevision: HEAD
-      path: "argocd/addons/cert-manager"
+      path: "argocd/cluster-addons/addons/cert-manager"
       # argocd/cluster-addons/addons/cert-manager
       helm:
         releaseName: cert-manager-crds
