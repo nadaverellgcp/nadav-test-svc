@@ -38,3 +38,8 @@ certManagerAddon:
     # including expiry notification emails. This field may be updated after the account is initially registered.
     # Read more: https://cert-manager.io/docs/reference/api-docs/
     email: nadav@koalaops.com
+sealedSecretsAddon:
+  enabled: true
+  chartVersion: 2.15.2
+  valuesObject:
+    fullnameOverride: sealed-secrets-controller
