@@ -26,6 +26,9 @@ certManagerAddon:
   # Values to be passed to the main cert-manager chart.
   # For a full list of values, see: https://artifacthub.io/packages/helm/cert-manager/cert-manager
   certManagerValues:
+    global:
+      leaderElection:
+        namespace: cert-manager
   # Values to be passed to the custom cert-manager-crds chart.
   certManagerCRDsValues:
     crdsVersion: 1.15.3
