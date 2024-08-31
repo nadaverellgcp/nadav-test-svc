@@ -49,3 +49,20 @@ argoRolloutsAddon:
   valuesObject:
     dashboard:
       enabled: true
+      ingress:
+        enabled: true
+        annotations:
+          cert-manager.io/cluster-issuer: letsencrypt
+          nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+          nginx.ingress.kubernetes.io/ssl-redirect: "true"
+          nginx.ingress.kubernetes.io/auth-type: "basic"
+          nginx.ingress.kubernetes.io/auth-secret: "argo-rollouts-auth"
+          nginx.ingress.kubernetes.io/auth-realm: "Authentication Required - Argo Rollouts"
+          nginx.ingress.kubernetes.io/rewrite-target: /
+        hosts:
+          - argo-rollouts.nonprod-cluster-us-central1.koalaops.com
+        ingressClassName: "nginx"
+        tls:
+          - hosts:
+              - argo-rollouts.nonprod-cluster-us-central1.koalaops.com
+            secretName: argo-rollouts-tls-cert
