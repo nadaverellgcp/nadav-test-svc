@@ -38,3 +38,13 @@ certManagerAddon:
     # including expiry notification emails. This field may be updated after the account is initially registered.
     # Read more: https://cert-manager.io/docs/reference/api-docs/
     email: nadav@koalaops.com
+sealedSecretsAddon:
+  enabled: true
+  valuesObject:
+    destination:
+      namespace: sealed-secrets
+    charts:
+      sealedsecrets:
+        enabled: true
+        targetRevision: "2.15.2"
+        valuesObject: {} # The values to be passed to the helm chart
