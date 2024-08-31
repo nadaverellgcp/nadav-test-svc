@@ -38,3 +38,17 @@ certManagerAddon:
     # including expiry notification emails. This field may be updated after the account is initially registered.
     # Read more: https://cert-manager.io/docs/reference/api-docs/
     email: nadav@koalaops.com
+otelCollectorAddon:
+  # must first verify
+  enabled: true
+  valuesObject:
+    tempo:
+      enabled: true
+      insecureHost: true
+      hostAndPort: tracing-tempo-distributor
+      basicAuth:
+        enabled: false
+    charts:
+      collector:
+        enabled: true
+        targetRevision: 0.82.0
