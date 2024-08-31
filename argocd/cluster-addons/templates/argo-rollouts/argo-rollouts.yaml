@@ -1,0 +1,37 @@
+# Generate the ArgoCD Application for a helm-chart-only addon, if the addon is enabled for the cluster.
+{{- if and (hasKey .Values "argoRolloutsAddon") (.Values.argoRolloutsAddon.enabled) }}
+{{- $addon := .Values.argoRolloutsAddon }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argo-rollouts-{{ .Values.cluster.name }}
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: cluster-admin
+  source:
+    chart: argo-rollouts
+    # Must provide a targetRevision (chart version) for helm charts for each cluster
+    targetRevision: {{ $addon.chartVersion | required "chartVersion is required" | quote}}
+    repoURL:  https://argoproj.github.io/argo-helm
+    helm:
+      releaseName: argo-rollouts
+      valuesObject:
+        # Pass values from the addon's valuesObject to the helm chart
+        {{- toYaml ($addon.valuesObject | default dict) |  nindent 8 }}
+  destination:
+    server: {{ .Values.spec.destination.server }}
+    namespace: {{ $addon.namespace | default "argo-rollouts" | quote }}
+  syncPolicy:
+    # Use the addon's syncPolicy if it is defined, otherwise use the cluster-default syncPolicy if defined, 
+    # or finally fall back to a basic default syncPolicy.
+    {{- if $addon.syncPolicy }}
+    {{- $addon.syncPolicy | toYaml | nindent 4 }}
+    {{- else if .Values.default.syncPolicy }}
+    {{- .Values.default.syncPolicy | toYaml | nindent 4 }}
+    {{- else }}
+    syncOptions:
+      - CreateNamespace=true
+    {{- end }}
+{{- end }}

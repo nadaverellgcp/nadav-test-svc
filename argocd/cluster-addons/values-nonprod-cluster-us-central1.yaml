@@ -43,3 +43,9 @@ sealedSecretsAddon:
   chartVersion: 2.15.2
   valuesObject:
     fullnameOverride: sealed-secrets-controller
+argoRolloutsAddon:
+  enabled: true
+  chartVersion: 2.37.5
+  valuesObject:
+    dashboard:
+      enabled: true
