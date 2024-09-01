@@ -1,0 +1,162 @@
+# Load spec to a variable
+
+{{- $addonSpecs := fromYaml (include "grafanaTempo.addonSpecs.v1" (dict "addonName" "grafanaTempo" "Values" .Values "Release" .Release)) }}
+# Use the addonV1 template to render the addon spec
+{{ include "addon.v1" (dict "addonName" "grafanaTempo" "Values" $addonSpecs "Release" .Release) }}
+
+{{- define "grafanaTempo.addonSpecs.v1" }}
+{{$addon := .Values.grafanaTempoAddon }}
+{{- if and $addon $addon.enabled}}
+{{- $grafanaTempoChart := index ( $addon.valuesObject.charts | default dict) "grafanaTempo" }}
+{{- $destinationNamespace := index ($addon.valuesObject.destination | default dict ) "namespace" | default "observability" }}
+{{include "addon.v1.argoContext" . }}
+grafanaTempoAddon:
+  enabled: true
+  valuesObject:
+    destination:
+      namespace: {{ $destinationNamespace | quote}}
+    ingress:
+      host: {{ $addon.valuesObject.ingress.host | quote }}
+    charts:
+      {{- if and $grafanaTempoChart ( $grafanaTempoChart.enabled | default false ) }}
+      grafanaTempo:
+        repoURL: "https://grafana.github.io/helm-charts"
+        targetRevision: {{ $grafanaTempoChart.targetRevision | default "1.8.3" | quote }}
+        name: "tempo-distributed"
+          {{ toYaml ($grafanaTempoChart.valuesObject | default dict) |  nindent 10 }}
+      {{- end }}
+    manifests:
+      {{- (include "grafanaTempo.addonSpecs.secrets.v1" . )| nindent 6 }}
+      {{- if and $addon.valuesObject.ingress $addon.valuesObject.ingress.enabled }}
+      - apiVersion: networking.k8s.io/v1
+        kind: Ingress
+        metadata:
+          annotations:
+            cert-manager.io/cluster-issuer: letsencrypt
+            {{- if and $addon.valuesObject.ingress.basicAuth $addon.valuesObject.ingress.basicAuth.enabled }}
+            nginx.ingress.kubernetes.io/auth-type: basic
+            nginx.ingress.kubernetes.io/auth-secret: {{ include "addon.v1.grafanaTempo.authSecretName" . | quote}}
+            nginx.ingress.kubernetes.io/auth-realm: "Authentication Required"
+            {{- end }}
+            nginx.ingress.kubernetes.io/grpc-backend: "true" # Enable gRPC backend
+            nginx.ingress.kubernetes.io/ssl-redirect: "true" # Force HTTPS, important for HTTP/2
+            nginx.ingress.kubernetes.io/backend-protocol: "GRPC" # Force gRPC protocol
+          name: "grafana-tempo-gw-{{ .Release.Name}}"
+          namespace: {{ $destinationNamespace | quote}}
+        spec:
+          ingressClassName: nginx
+          rules:
+          - host: {{ $addon.valuesObject.ingress.host | quote }}
+            http:
+              paths:
+              - backend:
+                  service:
+                    name: {{ index ($addon.valuesObject.ingress.service | default dict) "name" | default "tracing-tempo-distributor" | quote}}
+                    port:
+                      number: {{ index ($addon.valuesObject.ingress.service | default dict) "port" | default 4317 }}
+                path: "/"
+                pathType: Prefix
+          tls:
+          - hosts:
+            - {{ $addon.valuesObject.ingress.host}}
+            secretName: {{ include "addon.v1.grafanaTempo.tlsSecretName" . | quote}}
+        status:
+          loadBalancer: {}
+      {{- end }}
+{{- end }}
+{{- end }}
+
+{{- define "grafanaTempo.addonSpecs.secrets.v1" }}
+{{- $addon := .Values.grafanaTempoAddon }}
+{{- $destinationNamespace := index ($addon.valuesObject.destination | default dict ) "namespace" | default "observability" }}
+{{- $basicAuthSecrets := $addon.valuesObject.basicAuthSecrets | default dict }}
+
+{{- $tempoUsername:= include "addon.v1.grafanaTempo.username" . }}
+{{- $addonMetadata := default dict $addon.valuesObject.metadata }}
+
+{{/* Password string needs to be proccessed by two methods that aren't available in helm template */}}
+{{/* Therefore the user name is randomly generated and stored as a sceret */}}
+{{- $tempoPassword:= "ac992f09-c175-4883-be8d-f7ae5fa710d0" }}
+{{- $tempoAuthForIngress:=  printf "%s:$apr1$OhXMLDG4$BEpU8S8T2.ig0fk/n9fiO1" $tempoUsername  }}
+{{- $tempoAuthClient:= printf "%s:%s" $tempoUsername $tempoPassword }}
+{{- if and $basicAuthSecrets.generateRandomSource $basicAuthSecrets.generateRandomSource.enabled }}
+- apiVersion: v1
+  kind: Secret
+  metadata:
+    name: {{ include "addon.v1.grafanaTempo.sourceAuthSecretName" $ | quote }}
+    namespace: {{ $destinationNamespace | quote}}
+    annotations:
+      argocd.argoproj.io/compare-options: IgnoreExtraneous
+  data:
+    username: {{ $tempoUsername | b64enc | quote }}
+    password: {{ $tempoPassword | b64enc | quote }}
+    auth: {{  $tempoAuthForIngress | b64enc | quote }}
+    auth-client: {{ $tempoAuthClient | b64enc | b64enc | quote }}
+{{- end }}
+{{- if and $basicAuthSecrets.syncSecretsAppFromManagmentCluster $basicAuthSecrets.syncSecretsAppFromManagmentCluster.enabled }}
+- apiVersion: v1
+  kind: Secret
+  metadata:
+    name: {{ include "addon.v1.grafanaTempo.authSecretName" $ | quote }}
+    namespace: {{ $destinationNamespace | quote }}
+    annotations:
+      argocd.argoproj.io/compare-options: IgnoreExtraneous
+  data:
+    username: {{ $tempoUsername | b64enc | quote }}
+    password: {{ $tempoPassword  | b64enc | quote }}
+    auth: {{  $tempoAuthForIngress | b64enc | quote }}
+    auth-client: {{ $tempoAuthClient | b64enc | b64enc | quote }}
+{{- range $key, $cluster := and $basicAuthSecrets.syncSecretsAppFromManagmentCluster.toClusters }}
+- apiVersion: argoproj.io/v1alpha1
+  kind: Application
+  metadata:
+    {{- if and (hasKey $cluster "metadata") (hasKey $cluster.metadata "name") }}
+    name: {{ $cluster.metadata.name | quote}}
+    {{- else }}
+    name: "grafanatempo-sync-secrets-{{ $cluster.name | default (sha1sum $cluster.address) }}-addon"
+    {{- end }}
+    {{- if and (hasKey $cluster "namespace") (hasKey $cluster.metadata "namespace") }}
+    namespace: {{ $cluster.metadata.namespace | quote }}
+    {{- else }}
+    namespace: {{ index $addonMetadata "namespace" | default "argocd" | quote }}
+    {{- end }}
+    finalizers:
+      - resources-finalizer.argocd.argoproj.io
+  spec:
+    {{- if (hasKey $.Values "project")}}
+    project: {{ $.Values.project }}
+    {{- else }}
+    project: cluster-admin
+    {{- end}}
+    source:
+      repoURL: https://koalaops.github.io/koala-addons
+      targetRevision: 0.1.0
+      chart: yaml-to-manifest
+      helm:
+        releaseName: "grafana-tempo-secrets-{{ $.Values.cluster.name }}"
+        valuesObject: 
+          manifests:
+            - apiVersion: v1
+              kind: Secret
+              metadata:
+                name: {{ include "addon.v1.grafanaTempo.authSecretName" $ | quote}}
+                annotations:
+                  argocd.argoproj.io/compare-options: IgnoreExtraneous
+              data:
+                username: {{ $tempoUsername | b64enc | quote }}
+                password: {{ $tempoPassword | b64enc | quote }}
+                auth: {{  $tempoAuthForIngress | b64enc | quote }}
+                auth-client: {{ $tempoAuthClient | b64enc | b64enc | quote }}
+    destination:
+      server: {{ $cluster.address | quote }}
+      namespace: {{ $cluster.namespace | default $destinationNamespace | quote }}
+    syncPolicy:
+      syncOptions:
+        - CreateNamespace=true
+      automated:
+        prune: false
+        selfHeal: true
+        allowEmpty: true
+{{- end}}
+{{- end }}
+{{- end}}
