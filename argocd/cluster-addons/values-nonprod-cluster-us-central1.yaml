@@ -66,3 +66,25 @@ argoRolloutsAddon:
           - hosts:
               - argo-rollouts.nonprod-cluster-us-central1.koalaops.com
             secretName: argo-rollouts-tls-cert
+grafanaTempoAddon:
+  enabled: true
+  valuesObject:
+    # The following section generates and syncs secrets for basic auth
+    # It is recommended to enable the feature only on management cluster
+    # basicAuthSecrets:
+    #   generateRandomSource:
+    #     enabled: true
+    #   syncSecretsAppFromManagmentCluster: 
+    #     enabled: true
+    #     toClusters:
+    #       
+    ingress:
+    # enabled: true       
+    # host: example: tempo-koacyswsky.nadaverellgcp.koalaops.com
+    # basicAuth:
+    # enabled: true
+    charts:
+      grafanaTempo:
+        enabled: true
+        targetRevision: "1.8.3"
+        name: "tempo-distributed"
