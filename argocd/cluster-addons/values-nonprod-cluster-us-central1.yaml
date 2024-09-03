@@ -31,7 +31,8 @@ certManagerAddon:
         namespace: cert-manager
   # Values to be passed to the custom cert-manager-crds chart.
   certManagerCRDsValues:
-    crdsVersion: 1.15.3
+    # Must match the folder under /addons/cert-manager/crds-<version>
+    crdsVersion: 1.15.4
     # Email is the email address to be associated with the ACME account.
     # This field is optional, but it is strongly recommended to be set.
     # It will be used to contact you in case of issues with your account or certificates,
