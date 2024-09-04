@@ -67,3 +67,12 @@ argoRolloutsAddon:
           - hosts:
               - argo-rollouts.nonprod-cluster-us-central1.koalaops.com
             secretName: argo-rollouts-tls-cert
+kyvernoAddon:
+  enabled: true
+  valuesObject:
+    charts:
+      kyverno:
+        repoURL: https://kyverno.github.io/kyverno/ # The URL of the repository
+        targetRevision: v1.12.2 # This is the latest version of the addon
+        name: kyverno # The name of the chart
+        valuesObject: {}

@@ -1,0 +1,35 @@
+{{- if and (hasKey .Values "kyvernoAddon") (.Values.kyvernoAddon.enabled) }}
+{{- $addon := .Values.kyvernoAddon }}
+{{- $kyvernoChart := index ($addon.valuesObject.charts | default dict) "kyverno" }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kyverno-{{ .Values.cluster.name }}
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: cluster-admin
+  source:
+    chart: kyverno
+    targetRevision: {{ $kyvernoChart.targetRevision | required "chart targetRevision is required" | quote}}
+    repoURL:  {{ $kyvernoChart.repoURL | required "chart repoURL is required" | quote}}
+    helm:
+      releaseName: kyverno
+      {{- if $kyvernoChart.valuesObject }}
+      valuesObject:
+        {{- toYaml ($kyvernoChart.valuesObject | default dict) |  nindent 8 }}
+      {{- end }}
+  destination:
+    server: {{ .Values.spec.destination.server }}
+    namespace: kyverno
+  syncPolicy:
+    {{- if .Values.kyvernoAddon.syncPolicy }}
+    {{- .Values.kyvernoAddon.syncPolicy | toYaml | nindent 4 }}
+    {{- else if .Values.default.syncPolicy }}
+    {{- .Values.default.syncPolicy | toYaml | nindent 4 }}
+    {{- else }}
+    syncOptions:
+      - CreateNamespace=true
+    {{- end }}
+{{- end }}
